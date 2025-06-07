@@ -5,6 +5,18 @@ A comprehensive multimodal AI application that leverages Qwen2.5-VL models for b
 > [!note]
 Demo usage is available now; this link may or may not be available in the future : https://huggingface.co/spaces/prithivMLmods/Qwen2.5-VL
 
+---
+
+## Video Understanding
+
+https://github.com/user-attachments/assets/240de7aa-ef0f-46f6-aa81-d8eb863a141b
+
+## Image Inference
+
+![Image Infer](https://github.com/user-attachments/assets/c63444bc-38af-4138-89fb-54b40ca60211)
+
+---
+
 ## Features
 
 - **Dual Model Support**: Choose between Qwen2.5-VL-7B-Instruct and Qwen2.5-VL-3B-Instruct models
@@ -21,18 +33,6 @@ A powerful multimodal AI model developed by Alibaba Cloud that excels at underst
 
 ### Qwen2.5-VL-3B-Instruct
 An instruction-tuned vision-language model from Alibaba Cloud, built upon the Qwen2-VL series. It excels at understanding and generating text related to both visual and textual inputs, making it capable of tasks like image captioning, visual question answering, object localization, long video understanding, and structured data extraction.
-
----
-
-## Video Understanding
-
-https://github.com/user-attachments/assets/6f84c6cd-bc85-4b23-bb2c-ba175b365170
-
-## Image Inference
-
-![Image Infer](https://github.com/user-attachments/assets/c63444bc-38af-4138-89fb-54b40ca60211)
-
----
 
 ## Installation
 

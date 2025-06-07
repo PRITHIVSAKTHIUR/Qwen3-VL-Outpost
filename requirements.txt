@@ -1,0 +1,12 @@
+gradio
+transformers
+transformers-stream-generator
+qwen-vl-utils
+torchvision
+torch
+huggingface_hub
+spaces
+accelerate
+pillow
+opencv-python
+av

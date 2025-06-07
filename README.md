@@ -46,9 +46,9 @@ pip install -r requirements.txt
 
 ## Requirements
 
-- Python 3.8+
+- Python 3.10+
 - CUDA-compatible GPU (recommended for optimal performance)
-- At least 16GB RAM
+- At least 41GB RAM
 - Internet connection for model downloads
 
 ## Usage

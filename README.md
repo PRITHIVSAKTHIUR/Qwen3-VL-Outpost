@@ -186,3 +186,5 @@ For questions and support, please open an issue on the GitHub repository or refe
 ## Citation
 
 If you use this application in your research, please cite the original Qwen2.5-VL papers and this repository.
+
+---

@@ -251,4 +251,4 @@ with gr.Blocks(css=css, theme="bethecloud/storj_theme") as demo:
     )
 
 if __name__ == "__main__":
-    demo.queue(max_size=30).launch(share=True, mcp_server=True, ssr_mode=False, show_error=True)
+    demo.queue(max_size=30).launch(share=True, ssr_mode=False, show_error=True)

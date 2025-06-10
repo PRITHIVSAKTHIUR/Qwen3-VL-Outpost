@@ -28,6 +28,8 @@ https://github.com/user-attachments/assets/240de7aa-ef0f-46f6-aa81-d8eb863a141b
 - **Advanced Configuration**: Fine-tune generation parameters for optimal results
 - **Interactive Examples**: Pre-loaded examples for both image and video inference
 
+---
+
 ## Models
 
 ### Qwen2.5-VL-7B-Instruct
@@ -35,6 +37,8 @@ A powerful multimodal AI model developed by Alibaba Cloud that excels at underst
 
 ### Qwen2.5-VL-3B-Instruct
 An instruction-tuned vision-language model from Alibaba Cloud, built upon the Qwen2-VL series. It excels at understanding and generating text related to both visual and textual inputs, making it capable of tasks like image captioning, visual question answering, object localization, long video understanding, and structured data extraction.
+
+---
 
 ## Installation
 

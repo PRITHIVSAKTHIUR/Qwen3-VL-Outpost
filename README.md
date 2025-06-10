@@ -100,6 +100,8 @@ The application is optimized for GPU acceleration using CUDA when available. It 
 ### Memory Management
 Models are loaded with float16 precision to optimize memory usage while maintaining performance quality.
 
+--- 
+
 ## File Structure
 
 ```
@@ -114,6 +116,8 @@ Models are loaded with float16 precision to optimize memory usage while maintain
     ├── 2.mp4
     └── 3.mp4
 ```
+
+---
 
 ## Environment Variables
 

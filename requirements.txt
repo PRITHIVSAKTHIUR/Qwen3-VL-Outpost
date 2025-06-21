@@ -5,6 +5,7 @@ qwen-vl-utils
 torchvision
 torch
 huggingface_hub
+hf_xet
 spaces
 accelerate
 pillow

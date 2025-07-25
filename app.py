@@ -15,6 +15,8 @@ import cv2
 
 from transformers import (
     Qwen2_5_VLForConditionalGeneration,
+    AutoModel,
+    AutoTokenizer,
     AutoProcessor,
     TextIteratorStreamer,
 )
@@ -41,6 +43,15 @@ MODEL_ID_X = "Qwen/Qwen2.5-VL-3B-Instruct"
 processor_x = AutoProcessor.from_pretrained(MODEL_ID_X, trust_remote_code=True)
 model_x = Qwen2_5_VLForConditionalGeneration.from_pretrained(
     MODEL_ID_X,
+    trust_remote_code=True,
+    torch_dtype=torch.float16
+).to(device).eval()
+
+# Load Qwen2.5-VL-7B-Abliterated-Caption-it
+MODEL_ID_Q = "prithivMLmods/Qwen2.5-VL-7B-Abliterated-Caption-it"
+processor_q = AutoProcessor.from_pretrained(MODEL_ID_Q, trust_remote_code=True)
+model_q = Qwen2_5_VLForConditionalGeneration.from_pretrained(
+    MODEL_ID_Q,
     trust_remote_code=True,
     torch_dtype=torch.float16
 ).to(device).eval()
@@ -75,6 +86,7 @@ def generate_image(model_name: str, text: str, image: Image.Image,
                    repetition_penalty: float = 1.2):
     """
     Generates responses using the selected model for image input.
+    Yields raw text and Markdown-formatted text.
     """
     if model_name == "Qwen2.5-VL-7B-Instruct":
         processor = processor_m
@@ -82,12 +94,15 @@ def generate_image(model_name: str, text: str, image: Image.Image,
     elif model_name == "Qwen2.5-VL-3B-Instruct":
         processor = processor_x
         model = model_x
+    elif model_name == "Qwen2.5-VL-7B-Abliterated-Caption-it":
+        processor = processor_q
+        model = model_q
     else:
-        yield "Invalid model selected."
+        yield "Invalid model selected.", "Invalid model selected."
         return
 
     if image is None:
-        yield "Please upload an image."
+        yield "Please upload an image.", "Please upload an image."
         return
 
     messages = [{
@@ -114,7 +129,7 @@ def generate_image(model_name: str, text: str, image: Image.Image,
     for new_text in streamer:
         buffer += new_text
         time.sleep(0.01)
-        yield buffer
+        yield buffer, buffer
 
 @spaces.GPU
 def generate_video(model_name: str, text: str, video_path: str,
@@ -125,6 +140,7 @@ def generate_video(model_name: str, text: str, video_path: str,
                    repetition_penalty: float = 1.2):
     """
     Generates responses using the selected model for video input.
+    Yields raw text and Markdown-formatted text.
     """
     if model_name == "Qwen2.5-VL-7B-Instruct":
         processor = processor_m
@@ -132,12 +148,15 @@ def generate_video(model_name: str, text: str, video_path: str,
     elif model_name == "Qwen2.5-VL-3B-Instruct":
         processor = processor_x
         model = model_x
+    elif model_name == "Qwen2.5-VL-7B-Abliterated-Caption-it":
+        processor = processor_q
+        model = model_q
     else:
-        yield "Invalid model selected."
+        yield "Invalid model selected.", "Invalid model selected."
         return
 
     if video_path is None:
-        yield "Please upload a video."
+        yield "Please upload a video.", "Please upload a video."
         return
 
     frames = downsample_video(video_path)
@@ -175,12 +194,13 @@ def generate_video(model_name: str, text: str, video_path: str,
     for new_text in streamer:
         buffer += new_text
         time.sleep(0.01)
-        yield buffer
+        yield buffer, buffer
 
 # Define examples for image and video inference
 image_examples = [
+    ["Explain the pie-chart in detail.", "images/2.jpg"],
     ["Jsonify Data.", "images/1.jpg"],
-    ["Explain the pie-chart in detail.", "images/2.jpg"]
+    ["Provide a detailed caption for the image..", "images/A.jpg"]
 ]
 
 video_examples = [
@@ -197,11 +217,16 @@ css = """
 .submit-btn:hover {
     background-color: #3498db !important;
 }
+.canvas-output {
+    border: 2px solid #4682B4;
+    border-radius: 10px;
+    padding: 20px;
+}
 """
 
 # Create the Gradio Interface
 with gr.Blocks(css=css, theme="bethecloud/storj_theme") as demo:
-    gr.Markdown("# **Qwen2.5-VL**")
+    gr.Markdown("# **[Qwen2.5-VL](https://huggingface.co/collections/prithivMLmods/multimodal-implementations-67c9982ea04b39f0608badb0)**")
     with gr.Row():
         with gr.Column():
             with gr.Tabs():
@@ -220,35 +245,43 @@ with gr.Blocks(css=css, theme="bethecloud/storj_theme") as demo:
                     gr.Examples(
                         examples=video_examples,
                         inputs=[video_query, video_upload]
-                    )
+                    ) 
             with gr.Accordion("Advanced options", open=False):
                 max_new_tokens = gr.Slider(label="Max new tokens", minimum=1, maximum=MAX_MAX_NEW_TOKENS, step=1, value=DEFAULT_MAX_NEW_TOKENS)
                 temperature = gr.Slider(label="Temperature", minimum=0.1, maximum=4.0, step=0.1, value=0.6)
                 top_p = gr.Slider(label="Top-p (nucleus sampling)", minimum=0.05, maximum=1.0, step=0.05, value=0.9)
                 top_k = gr.Slider(label="Top-k", minimum=1, maximum=1000, step=1, value=50)
                 repetition_penalty = gr.Slider(label="Repetition penalty", minimum=1.0, maximum=2.0, step=0.05, value=1.2)
+                
         with gr.Column():
-            output = gr.Textbox(label="Output", interactive=False, lines=2, scale=2)
+            with gr.Column(elem_classes="canvas-output"):
+                gr.Markdown("## Output")
+                output = gr.Textbox(label="Raw Output", interactive=False, lines=2, scale=2)
+            
+                with gr.Accordion("(Result.md)", open=False):
+                    markdown_output = gr.Markdown()
+                
             model_choice = gr.Radio(
-                choices=["Qwen2.5-VL-7B-Instruct", "Qwen2.5-VL-3B-Instruct"],
+                choices=["Qwen2.5-VL-7B-Instruct", "Qwen2.5-VL-3B-Instruct", "Qwen2.5-VL-7B-Abliterated-Caption-it"],
                 label="Select Model",
                 value="Qwen2.5-VL-7B-Instruct"
             )
-            
-            gr.Markdown("**Model Info**")
+            gr.Markdown("**Model Info 💻** | [Report Bug](https://huggingface.co/spaces/prithivMLmods/Qwen2.5-VL/discussions)")
             gr.Markdown("> [Qwen2.5-VL-7B-Instruct](https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct): The Qwen2.5-VL-7B-Instruct model is a multimodal AI model developed by Alibaba Cloud that excels at understanding both text and images. It's a Vision-Language Model (VLM) designed to handle various visual understanding tasks, including image understanding, video analysis, and even multilingual support.")
             gr.Markdown("> [Qwen2.5-VL-3B-Instruct](https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct): Qwen2.5-VL-3B-Instruct is an instruction-tuned vision-language model from Alibaba Cloud, built upon the Qwen2-VL series. It excels at understanding and generating text related to both visual and textual inputs, making it capable of tasks like image captioning, visual question answering, and object localization. The model also supports long video understanding and structured data extraction")
+            gr.Markdown("> [Qwen2.5-VL-7B-Abliterated-Caption-it](https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct): Qwen2.5-VL-7B-Abliterated-Caption-it is a fine-tuned version of Qwen2.5-VL-7B-Instruct, optimized for Abliterated Captioning / Uncensored Captioning. This model excels at generating detailed, context-rich, and high-fidelity captions across diverse image categories and variational aspect ratios, offering robust visual understanding without filtering or censorship.")
+            gr.Markdown(">⚠️note: all the models in space are not guaranteed to perform well in video inference use cases.")
             
     image_submit.click(
         fn=generate_image,
         inputs=[model_choice, image_query, image_upload, max_new_tokens, temperature, top_p, top_k, repetition_penalty],
-        outputs=output
+        outputs=[output, markdown_output]
     )
     video_submit.click(
         fn=generate_video,
         inputs=[model_choice, video_query, video_upload, max_new_tokens, temperature, top_p, top_k, repetition_penalty],
-        outputs=output
+        outputs=[output, markdown_output]
     )
 
 if __name__ == "__main__":
-    demo.queue(max_size=30).launch(share=True, ssr_mode=False, show_error=True)
+    demo.queue(max_size=30).launch(share=True, mcp_server=True, ssr_mode=False, show_error=True)

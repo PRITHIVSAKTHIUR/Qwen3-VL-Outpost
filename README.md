@@ -5,7 +5,7 @@ A comprehensive multimodal AI application that leverages Qwen2.5-VL models for b
 ---
 
 > [!note]
-Demo usage is available now; this link may or may not be available in the future : https://huggingface.co/spaces/prithivMLmods/Qwen2.5-VL
+Demo usage is available now; this link may or may not be available in the future : [https://huggingface.co/spaces/prithivMLmods/Qwen2.5-VL](https://huggingface.co/spaces/prithivMLmods/Qwen2.5-VL-Outpost)
 
 ---
 

@@ -56,11 +56,11 @@ model_q = Qwen2_5_VLForConditionalGeneration.from_pretrained(
     torch_dtype=torch.float16
 ).to(device).eval()
 
-# Load allenai/olmOCR-7B-0825
-MODEL_ID_F = "allenai/olmOCR-7B-0825"
-processor_f = AutoProcessor.from_pretrained(MODEL_ID_F, trust_remote_code=True)
-model_f = Qwen2_5_VLForConditionalGeneration.from_pretrained(
-    MODEL_ID_F,
+# Load Lumian2-VLR-7B-Thinking
+MODEL_ID_Y = "prithivMLmods/Lumian2-VLR-7B-Thinking"
+processor_y = AutoProcessor.from_pretrained(MODEL_ID_Y, trust_remote_code=True)
+model_y = Qwen2_5_VLForConditionalGeneration.from_pretrained(
+    MODEL_ID_Y,
     trust_remote_code=True,
     torch_dtype=torch.float16
 ).to(device).eval()
@@ -106,9 +106,9 @@ def generate_image(model_name: str, text: str, image: Image.Image,
     elif model_name == "Qwen2.5-VL-7B-Abliterated-Caption-it":
         processor = processor_q
         model = model_q
-    elif model_name == "olmOCR-7B-0825":
-        processor = processor_f
-        model = model_f
+    elif model_name == "Lumian2-VLR-7B-Thinking":
+        processor = processor_y
+        model = model_y
     else:
         yield "Invalid model selected.", "Invalid model selected."
         return
@@ -163,9 +163,9 @@ def generate_video(model_name: str, text: str, video_path: str,
     elif model_name == "Qwen2.5-VL-7B-Abliterated-Caption-it":
         processor = processor_q
         model = model_q
-    elif model_name == "olmOCR-7B-0825":
-        processor = processor_f
-        model = model_f
+    elif model_name == "Lumian2-VLR-7B-Thinking":
+        processor = processor_y
+        model = model_y
     else:
         yield "Invalid model selected.", "Invalid model selected."
         return
@@ -213,7 +213,10 @@ def generate_video(model_name: str, text: str, video_path: str,
 
 # Define examples for image and video inference
 image_examples = [
-    ["Provide a detailed caption for the image..", "images/A.jpg"],
+    ["Explain the content in detail.", "images/D.jpg"],
+    ["Explain the content (ocr).", "images/O.jpg"],
+    ["What is the core meaning of the poem?", "images/S.jpg"],
+    ["Provide a detailed caption for the image.", "images/A.jpg"],
     ["Explain the pie-chart in detail.", "images/2.jpg"],
     ["Jsonify Data.", "images/1.jpg"],
 ]
@@ -241,7 +244,7 @@ css = """
 
 # Create the Gradio Interface
 with gr.Blocks(css=css, theme="bethecloud/storj_theme") as demo:
-    gr.Markdown("# **[Qwen2.5-VL](https://huggingface.co/collections/prithivMLmods/multimodal-implementations-67c9982ea04b39f0608badb0)**")
+    gr.Markdown("# **[Qwen2.5-VL-Outpost](https://huggingface.co/collections/prithivMLmods/multimodal-implementations-67c9982ea04b39f0608badb0)**")
     with gr.Row():
         with gr.Column():
             with gr.Tabs():
@@ -271,21 +274,28 @@ with gr.Blocks(css=css, theme="bethecloud/storj_theme") as demo:
         with gr.Column():
             with gr.Column(elem_classes="canvas-output"):
                 gr.Markdown("## Output")
-                output = gr.Textbox(label="Raw Output", interactive=False, lines=2, scale=2)
+                output = gr.Textbox(label="Raw Output", interactive=False, lines=3, scale=2)
             
                 with gr.Accordion("(Result.md)", open=False):
                     markdown_output = gr.Markdown()
                 
             model_choice = gr.Radio(
-                choices=["Qwen2.5-VL-7B-Instruct", "Qwen2.5-VL-3B-Instruct", "Qwen2.5-VL-7B-Abliterated-Caption-it", "olmOCR-7B-0825"],
+                choices=["Qwen2.5-VL-7B-Instruct", "Qwen2.5-VL-3B-Instruct", "Lumian2-VLR-7B-Thinking", "Qwen2.5-VL-7B-Abliterated-Caption-it"],
                 label="Select Model",
                 value="Qwen2.5-VL-7B-Instruct"
             )
             gr.Markdown("**Model Info 💻** | [Report Bug](https://huggingface.co/spaces/prithivMLmods/Qwen2.5-VL/discussions)")
-            gr.Markdown("> [Qwen2.5-VL-7B-Instruct](https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct): The Qwen2.5-VL-7B-Instruct model is a multimodal AI model developed by Alibaba Cloud that excels at understanding both text and images. It's a Vision-Language Model (VLM) designed to handle various visual understanding tasks, including image understanding, video analysis, and even multilingual support.")
-            gr.Markdown("> [Qwen2.5-VL-3B-Instruct](https://huggingface.co/Qwen/Qwen2.5-VL-3B-Instruct): Qwen2.5-VL-3B-Instruct is an instruction-tuned vision-language model from Alibaba Cloud, built upon the Qwen2-VL series. It excels at understanding and generating text related to both visual and textual inputs, making it capable of tasks like image captioning, visual question answering, and object localization. The model also supports long video understanding and structured data extraction")
-            gr.Markdown("> [Qwen2.5-VL-7B-Abliterated-Caption-it](prithivMLmods/Qwen2.5-VL-7B-Abliterated-Caption-it): Qwen2.5-VL-7B-Abliterated-Caption-it is a fine-tuned version of Qwen2.5-VL-7B-Instruct, optimized for Abliterated Captioning / Uncensored Captioning. This model excels at generating detailed, context-rich, and high-fidelity captions across diverse image categories and variational aspect ratios, offering robust visual understanding without filtering or censorship.")
-            gr.Markdown("> [olmOCR-7B-0825](https://huggingface.co/allenai/olmOCR-7B-0825): olmOCR-7B-0825 is a 7B parameter open large model designed for OCR tasks with robust text extraction, especially in complex document layouts. Multimodal model emphasizing strong document reading and extraction capabilities combined with vision-language understanding to support detailed document parsing tasks.")
+            
+            gr.Markdown(
+                """
+            > [Qwen2.5-VL-7B-Instruct](https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct): The Qwen2.5-VL-7B-Instruct model is a multimodal AI model developed by Alibaba Cloud that excels at understanding both text and images. It's a Vision-Language Model (VLM) designed to handle various visual understanding tasks, including image understanding, video analysis, and even multilingual support.  
+            >
+            > [Qwen2.5-VL-7B-Abliterated-Caption-it](prithivMLmods/Qwen2.5-VL-7B-Abliterated-Caption-it): Qwen2.5-VL-7B-Abliterated-Caption-it is a fine-tuned version of Qwen2.5-VL-7B-Instruct, optimized for Abliterated Captioning / Uncensored Captioning. This model excels at generating detailed, context-rich, and high-fidelity captions across diverse image categories and variational aspect ratios, offering robust visual understanding without filtering or censorship.  
+                """
+            )
+
+            gr.Markdown("> [Lumian2-VLR-7B-Thinking](https://huggingface.co/prithivMLmods/Lumian2-VLR-7B-Thinking): The Lumian2-VLR-7B-Thinking model is a high-fidelity vision-language reasoning (experimental model) system designed for fine-grained multimodal understanding. Built on Qwen2.5-VL-7B-Instruct, this model enhances image captioning, sampled video reasoning, and document comprehension through explicit grounded reasoning. It produces structured reasoning traces aligned with visual coordinates, enabling explainable multimodal reasoning.")
+        
             gr.Markdown(">⚠️note: all the models in space are not guaranteed to perform well in video inference use cases.")
             
     image_submit.click(

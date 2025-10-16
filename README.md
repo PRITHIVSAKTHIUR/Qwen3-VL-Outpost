@@ -1,200 +1,194 @@
-# **Qwen2.5-VL Video Understanding**
 
-A comprehensive multimodal AI application that leverages Qwen2.5-VL models for both image and video understanding tasks. This application provides an intuitive web interface for analyzing visual content using state-of-the-art vision-language models.
+# **Qwen3-VL-Outpost**
 
----
+<img width="1756" height="1228" alt="Screenshot 2025-10-16 at 12-17-00 Qwen3-VL-Outpost - a Hugging Face Space by prithivMLmods" src="https://github.com/user-attachments/assets/11114b29-5f43-4a79-8030-7312b343a7a2" />
 
-> [!note]
-Demo usage is available now; this link may or may not be available in the future : [https://huggingface.co/spaces/prithivMLmods/Qwen2.5-VL-Outpost](https://huggingface.co/spaces/prithivMLmods/Qwen2.5-VL-Outpost)
+**Qwen3-VL-Outpost** is a Gradio-based web application for vision-language tasks, leveraging multiple Qwen vision-language models to process images and videos. It provides an intuitive interface for users to input queries, upload media, and generate detailed responses using advanced models like **Qwen3-VL** and **Qwen2.5-VL**.
 
 ---
 
-## Video Understanding
+## **Features**
 
-https://github.com/user-attachments/assets/240de7aa-ef0f-46f6-aa81-d8eb863a141b
+* **Image and Video Inference:** Upload images or videos and input text queries to generate detailed responses.
+* **Multiple Model Support:** Choose from the following models:
 
-## Image Inference
-
-![Image Infer](https://github.com/user-attachments/assets/c63444bc-38af-4138-89fb-54b40ca60211)
-
----
-
-## Features
-
-- **Dual Model Support**: Choose between Qwen2.5-VL-7B-Instruct and Qwen2.5-VL-3B-Instruct models
-- **Image Analysis**: Upload and analyze images with natural language queries
-- **Video Understanding**: Process videos with intelligent frame sampling and analysis
-- **Real-time Streaming**: Get responses as they are generated with streaming output
-- **Advanced Configuration**: Fine-tune generation parameters for optimal results
-- **Interactive Examples**: Pre-loaded examples for both image and video inference
+  * Qwen3-VL-4B-Instruct
+  * Qwen3-VL-8B-Instruct
+  * Qwen3-VL-4B-Thinking
+  * Qwen2.5-VL-3B-Instruct
+  * Qwen2.5-VL-7B-Instruct
+* **Customizable Parameters:** Adjust advanced settings such as *max new tokens*, *temperature*, *top-p*, *top-k*, and *repetition penalty*.
+* **Real-time Streaming:** View model outputs as they are generated.
+* **Custom Theme:** Uses a tailored **SteelBlueTheme** for an enhanced user interface.
+* **Example Inputs:** Predefined examples for quick testing of image and video inference.
 
 ---
 
-## Models
+## **Installation**
 
-### Qwen2.5-VL-7B-Instruct
-A powerful multimodal AI model developed by Alibaba Cloud that excels at understanding both text and images. This Vision-Language Model (VLM) is designed to handle various visual understanding tasks, including image understanding, video analysis, and multilingual support.
+### **Prerequisites**
 
-### Qwen2.5-VL-3B-Instruct
-An instruction-tuned vision-language model from Alibaba Cloud, built upon the Qwen2-VL series. It excels at understanding and generating text related to both visual and textual inputs, making it capable of tasks like image captioning, visual question answering, object localization, long video understanding, and structured data extraction.
+* Python 3.8 or higher
+* Git
+* CUDA-compatible GPU (recommended for optimal performance)
 
 ---
 
-## Installation
+### **Steps**
 
-1. Clone the repository:
+#### **1. Clone the Repository**
+
 ```bash
-git clone https://github.com/PRITHIVSAKTHIUR/Qwen2.5-VL-Video-Understanding.git
-cd Qwen2.5-VL-Video-Understanding
+git clone https://github.com/PRITHIVSAKTHIUR/Qwen3-VL-Outpost.git
+cd Qwen3-VL-Outpost
 ```
 
-2. Install the required dependencies:
+#### **2. Create a Virtual Environment** *(optional but recommended)*
+
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+#### **3. Install Dependencies**
+
+Install the required packages using:
+
 ```bash
 pip install -r requirements.txt
 ```
 
-## Requirements
+**requirements.txt** includes:
 
-- Python 3.10+
-- CUDA-compatible GPU (recommended for optimal performance)
-- At least 41GB RAM
-- Internet connection for model downloads
+```
+git+https://github.com/huggingface/accelerate.git
+git+https://github.com/huggingface/peft.git
+transformers-stream-generator
+transformers==4.57.1
+huggingface_hub
+albumentations
+qwen-vl-utils
+pyvips-binary
+sentencepiece
+opencv-python
+docling-core
+python-docx
+torchvision
+supervision
+matplotlib
+pdf2image
+num2words
+reportlab
+html2text
+xformers
+markdown
+requests
+pymupdf
+loguru
+hf_xet
+spaces
+pyvips
+pillow
+gradio
+einops
+httpx
+click
+torch
+fpdf
+timm
+av
+```
 
-## Usage
+---
 
-1. Start the application:
+### **4. Run the Application**
+
+Start the Gradio interface with:
+
 ```bash
 python app.py
 ```
 
-2. Open your web browser and navigate to the provided local URL (typically `http://localhost:7860`)
+This will launch the web interface, accessible via your browser.
+The application supports queuing with a maximum size of **50**.
 
-3. Choose between Image Inference or Video Inference tabs
+---
 
-### Image Analysis
-- Enter your query in the text box
-- Upload an image file
-- Select your preferred model
-- Adjust advanced parameters if needed
-- Click Submit to get analysis
+## **Usage**
 
-### Video Analysis
-- Enter your query describing what you want to analyze
-- Upload a video file
-- The system will automatically extract 10 evenly spaced frames
-- Select your preferred model
-- Click Submit for comprehensive video understanding
+1. **Select a Model:** Choose one of the available Qwen models from the radio buttons.
+2. **Upload Media:** Use the image or video upload section to provide input media.
+3. **Enter Query:** Input your text query in the provided textbox.
+4. **Adjust Settings:** Optionally tweak advanced parameters like *max new tokens* or *temperature* in the accordion.
+5. **Submit:** Click the **Submit** button to generate a response.
 
-## Advanced Parameters
+   * Outputs are displayed in real-time in the **Raw Output Stream** and as formatted Markdown.
 
-- **Max New Tokens**: Control the length of generated responses (1-2048)
-- **Temperature**: Adjust creativity vs consistency (0.1-4.0)
-- **Top-p**: Nucleus sampling parameter (0.05-1.0)
-- **Top-k**: Top-k sampling parameter (1-1000)
-- **Repetition Penalty**: Reduce repetitive outputs (1.0-2.0)
+---
 
-## Technical Details
+## **Example Queries**
 
-### Video Processing
-The application uses intelligent video downsampling to extract 10 representative frames from uploaded videos. Each frame is processed with its timestamp to provide temporal context for analysis.
+### **Image Inference**
 
-### GPU Acceleration
-The application is optimized for GPU acceleration using CUDA when available. It automatically falls back to CPU processing if no GPU is detected.
+* “Explain the content in detail.” *(with an uploaded image)*
+* “Jsonify Data.” *(for images with tabular data)*
 
-### Memory Management
-Models are loaded with float16 precision to optimize memory usage while maintaining performance quality.
+### **Video Inference**
 
---- 
+* “Explain the ad in detail.” *(with an uploaded video)*
+* “Identify the main actions in the video.”
 
-## File Structure
+---
+
+## **Project Structure**
 
 ```
-├── app.py                 # Main application file
-├── requirements.txt       # Python dependencies
-├── README.md             # Project documentation
-├── images/               # Example images directory
-│   ├── 1.jpg
-│   └── 2.jpg
-└── videos/               # Example videos directory
-    ├── 1.mp4
-    ├── 2.mp4
-    └── 3.mp4
+Qwen3-VL-Outpost/
+│
+├── app.py              # Main application script containing the Gradio interface and model logic
+├── images/             # Directory for example image files
+├── videos/             # Directory for example video files
+├── requirements.txt    # List of dependencies required for the project
+└── README.md           # Project documentation
 ```
 
 ---
 
-## Environment Variables
+## **Notes**
 
-- `MAX_INPUT_TOKEN_LENGTH`: Maximum input token length (default: 4096)
-
-## Supported Formats
-
-### Images
-- JPEG, PNG, BMP, TIFF
-- Recommended resolution: Up to 2048x2048 pixels
-
-### Videos
-- MP4, AVI, MOV, MKV
-- Recommended duration: Up to 60 seconds for optimal processing
-- Automatic frame extraction at 10 evenly spaced intervals
-
-## Example Use Cases
-
-### Image Analysis
-- Document analysis and data extraction
-- Chart and graph interpretation
-- Object detection and recognition
-- Scene understanding
-- OCR and text extraction
-
-### Video Analysis
-- Activity recognition
-- Scene transition analysis
-- Object tracking
-- Content summarization
-- Advertisement analysis
-
-## Performance Notes
-
-- 7B model provides more detailed and accurate responses but requires more computational resources
-- 3B model offers faster processing with good quality results
-- GPU acceleration significantly improves response times
-- Video processing time scales with video duration and complexity
-
-## Troubleshooting
-
-### Common Issues
-
-1. **CUDA Out of Memory**: Reduce max_new_tokens or use the 3B model
-2. **Slow Processing**: Ensure GPU acceleration is available
-3. **Model Loading Errors**: Check internet connection for initial model downloads
-4. **Video Format Issues**: Convert videos to MP4 format if experiencing problems
-
-### System Requirements
-- Minimum 28GB GPU memory for 7B model
-- Minimum 16GB GPU memory for 3B model
-- 48GB system RAM recommended for optimal performance
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit pull requests or open issues for bugs and feature requests.
-
-## License
-
-This project is licensed under the MIT License. See the LICENSE file for details.
-
-## Acknowledgments
-
-- Alibaba Cloud for developing the Qwen2.5-VL models
-- Hugging Face for the transformers library
-- Gradio for the web interface framework
-
-## Support
-
-For questions and support, please open an issue on the GitHub repository or refer to the official Qwen documentation.
-
-## Citation
-
-If you use this application in your research, please cite the original Qwen2.5-VL papers and this repository.
+* The application uses **PyTorch** with GPU acceleration (`torch.cuda`) if available; otherwise, it falls back to CPU.
+* Video processing downsamples videos to a maximum of **10 frames** to optimize memory usage.
+* Ensure sufficient disk space and memory when loading large models such as **Qwen3-VL-8B-Instruct**.
+* The application is designed to run in a browser via Gradio's web interface.
 
 ---
+
+## **Contributing**
+
+Contributions are welcome!
+To contribute:
+
+1. Fork the repository.
+2. Create a new branch:
+
+   ```bash
+   git checkout -b feature-branch
+   ```
+3. Make your changes and commit:
+
+   ```bash
+   git commit -m "Add new feature"
+   ```
+4. Push to the branch:
+
+   ```bash
+   git push origin feature-branch
+   ```
+5. Open a pull request.
+
+---
+
+## **License**
+
+This project is licensed under the **Apache License 2.0**.
+See the [LICENSE](LICENSE) file for details.

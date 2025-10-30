@@ -138,15 +138,6 @@ model_y = Qwen3VLForConditionalGeneration.from_pretrained(
     torch_dtype=torch.float16
 ).to(device).eval()
 
-# Load Qwen3-VL-4B-Thinking
-MODEL_ID_T = "Qwen/Qwen3-VL-4B-Thinking"
-processor_t = AutoProcessor.from_pretrained(MODEL_ID_T, trust_remote_code=True)
-model_t = Qwen3VLForConditionalGeneration.from_pretrained(
-    MODEL_ID_T,
-    trust_remote_code=True,
-    torch_dtype=torch.float16
-).to(device).eval()
-
 def downsample_video(video_path):
     """
     Downsamples the video to evenly spaced frames.
@@ -187,8 +178,6 @@ def generate_image(model_name: str, text: str, image: Image.Image,
         processor, model = processor_q, model_q
     elif model_name == "Qwen3-VL-8B-Instruct":
         processor, model = processor_y, model_y
-    elif model_name == "Qwen3-VL-4B-Thinking":
-        processor, model = processor_t, model_t
     else:
         yield "Invalid model selected.", "Invalid model selected."
         return
@@ -229,8 +218,6 @@ def generate_video(model_name: str, text: str, video_path: str,
         processor, model = processor_q, model_q
     elif model_name == "Qwen3-VL-8B-Instruct":
         processor, model = processor_y, model_y
-    elif model_name == "Qwen3-VL-4B-Thinking":
-        processor, model = processor_t, model_t
     else:
         yield "Invalid model selected.", "Invalid model selected."
         return
@@ -264,7 +251,7 @@ def generate_video(model_name: str, text: str, video_path: str,
     buffer = ""
     for new_text in streamer:
         buffer += new_text
-        buffer = buffer.replace("<|im_end|>", "")
+        #buffer = buffer.replace("<|im_end|>", "")
         time.sleep(0.01)
         yield buffer, buffer
 
@@ -275,8 +262,8 @@ image_examples = [
     ["Explain the content (ocr).", "images/O.jpg"],
     ["What is the core meaning of the poem?", "images/S.jpg"],
     ["Provide a detailed caption for the image.", "images/A.jpg"],
-    ["Explain the pie-chart in detail.", "images/2.jpg"],
-    ["Jsonify Data.", "images/1.jpg"],
+    #["Explain the pie-chart in detail.", "images/2.jpg"],
+    #["Jsonify Data.", "images/1.jpg"],
 ]
 
 video_examples = [
@@ -325,7 +312,7 @@ with gr.Blocks(css=css, theme=steel_blue_theme) as demo:
                 markdown_output = gr.Markdown()
                 
             model_choice = gr.Radio(
-                choices=["Qwen3-VL-4B-Instruct", "Qwen3-VL-8B-Instruct", "Qwen3-VL-4B-Thinking", "Qwen2.5-VL-3B-Instruct", "Qwen2.5-VL-7B-Instruct"],
+                choices=["Qwen3-VL-4B-Instruct", "Qwen3-VL-8B-Instruct", "Qwen2.5-VL-3B-Instruct", "Qwen2.5-VL-7B-Instruct"],
                 label="Select Model",
                 value="Qwen3-VL-4B-Instruct"
             )

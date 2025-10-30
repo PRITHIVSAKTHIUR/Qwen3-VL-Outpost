@@ -17,7 +17,6 @@ pdf2image
 num2words
 reportlab
 html2text
-xformers
 markdown
 requests
 pymupdf

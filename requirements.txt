@@ -3,7 +3,6 @@ git+https://github.com/huggingface/peft.git
 transformers-stream-generator
 transformers==4.57.1
 huggingface_hub
-albumentations
 qwen-vl-utils
 pyvips-binary
 sentencepiece
@@ -14,13 +13,10 @@ torchvision
 supervision 
 matplotlib
 pdf2image
-num2words
 reportlab
-html2text
 markdown
 requests
 pymupdf
-loguru
 hf_xet
 spaces
 pyvips
@@ -28,7 +24,6 @@ pillow
 gradio
 einops
 httpx
-click
 torch
 fpdf
 timm

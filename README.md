@@ -1,6 +1,8 @@
 
 # **Qwen3-VL-Outpost**
 
+> HF Demo: https://huggingface.co/spaces/prithivMLmods/Qwen3-VL-Outpost
+
 <img width="1918" height="1140" alt="Screenshot 2025-11-02 at 01-45-32 Qwen3-VL-Outpost - a Hugging Face Space by prithivMLmods" src="https://github.com/user-attachments/assets/3b9562e0-e1ec-4228-b4a7-ce444555155e" />
 
 **Qwen3-VL-Outpost** is a Gradio-based web application for vision-language tasks, leveraging multiple Qwen vision-language models to process images and videos. It provides an intuitive interface for users to input queries, upload media, and generate detailed responses using advanced models like **Qwen3-VL** and **Qwen2.5-VL**.

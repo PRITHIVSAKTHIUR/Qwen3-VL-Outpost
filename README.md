@@ -1,7 +1,8 @@
 
 # **Qwen3-VL-Outpost**
 
-> HF Demo: https://huggingface.co/spaces/prithivMLmods/Qwen3-VL-Outpost
+> [!note]
+HF Demo: https://huggingface.co/spaces/prithivMLmods/Qwen3-VL-Outpost
 
 <img width="1918" height="1140" alt="Screenshot 2025-11-02 at 01-45-32 Qwen3-VL-Outpost - a Hugging Face Space by prithivMLmods" src="https://github.com/user-attachments/assets/3b9562e0-e1ec-4228-b4a7-ce444555155e" />
 

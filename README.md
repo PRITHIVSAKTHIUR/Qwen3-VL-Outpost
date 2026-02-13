@@ -85,6 +85,9 @@ timm
 av
 ```
 
+> [!important] 
+note: remove kernels and flash_attn3 implementation if you are using it on *non-hopper* architecture gpus.
+
 ---
 
 ### **4. Run the Application**

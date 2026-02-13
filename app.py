@@ -29,9 +29,6 @@ from transformers.image_utils import load_image
 from gradio.themes import Soft
 from gradio.themes.utils import colors, fonts, sizes
 
-# --- Theme and CSS Definition ---
-
-# Define the new OrangeRed color palette
 colors.orange_red = colors.Color(
     name="orange_red",
     c50="#FFF0E5",
@@ -39,7 +36,7 @@ colors.orange_red = colors.Color(
     c200="#FFC299",
     c300="#FFA366",
     c400="#FF8533",
-    c500="#FF4500",  # OrangeRed base color
+    c500="#FF4500",
     c600="#E63E00",
     c700="#CC3700",
     c800="#B33000",
@@ -52,7 +49,7 @@ class OrangeRedTheme(Soft):
         self,
         *,
         primary_hue: colors.Color | str = colors.gray,
-        secondary_hue: colors.Color | str = colors.orange_red, # Use the new color
+        secondary_hue: colors.Color | str = colors.orange_red,
         neutral_hue: colors.Color | str = colors.slate,
         text_size: sizes.Size | str = sizes.text_lg,
         font: fonts.Font | str | Iterable[fonts.Font | str] = (
@@ -98,7 +95,6 @@ class OrangeRedTheme(Soft):
             block_label_background_fill="*primary_200",
         )
 
-# Instantiate the new theme
 orange_red_theme = OrangeRedTheme()
 
 css = """
@@ -106,7 +102,41 @@ css = """
     font-size: 2.3em !important;
 }
 #output-title h2 {
-    font-size: 2.1em !important;
+    font-size: 2.2em !important;
+}
+
+/* RadioAnimated Styles */
+.ra-wrap{ width: fit-content; }
+.ra-inner{
+  position: relative; display: inline-flex; align-items: center; gap: 0; padding: 6px;
+  background: var(--neutral-200); border-radius: 9999px; overflow: hidden;
+}
+.ra-input{ display: none; }
+.ra-label{
+  position: relative; z-index: 2; padding: 8px 16px;
+  font-family: inherit; font-size: 14px; font-weight: 600;
+  color: var(--neutral-500); cursor: pointer; transition: color 0.2s; white-space: nowrap;
+}
+.ra-highlight{
+  position: absolute; z-index: 1; top: 6px; left: 6px;
+  height: calc(100% - 12px); border-radius: 9999px;
+  background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.2s, width 0.2s;
+}
+.ra-input:checked + .ra-label{ color: black; }
+
+/* Dark mode adjustments for Radio */
+.dark .ra-inner { background: var(--neutral-800); }
+.dark .ra-label { color: var(--neutral-400); }
+.dark .ra-highlight { background: var(--neutral-600); }
+.dark .ra-input:checked + .ra-label { color: white; }
+
+#gpu-duration-container {
+    padding: 10px;
+    border-radius: 8px;
+    background: var(--background-fill-secondary);
+    border: 1px solid var(--border-color-primary);
+    margin-top: 10px;
 }
 """
 
@@ -116,55 +146,125 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 print("Using device:", device)
 
-# --- Model Loading ---
+class RadioAnimated(gr.HTML):
+    def __init__(self, choices, value=None, **kwargs):
+        if not choices or len(choices) < 2:
+            raise ValueError("RadioAnimated requires at least 2 choices.")
+        if value is None:
+            value = choices[0]
 
-# Load Qwen3-VL-4B-Instruct
+        uid = uuid.uuid4().hex[:8]
+        group_name = f"ra-{uid}"
+
+        inputs_html = "\n".join(
+            f"""
+            <input class="ra-input" type="radio" name="{group_name}" id="{group_name}-{i}" value="{c}">
+            <label class="ra-label" for="{group_name}-{i}">{c}</label>
+            """
+            for i, c in enumerate(choices)
+        )
+
+        html_template = f"""
+        <div class="ra-wrap" data-ra="{uid}">
+          <div class="ra-inner">
+            <div class="ra-highlight"></div>
+            {inputs_html}
+          </div>
+        </div>
+        """
+
+        js_on_load = r"""
+        (() => {
+          const wrap = element.querySelector('.ra-wrap');
+          const inner = element.querySelector('.ra-inner');
+          const highlight = element.querySelector('.ra-highlight');
+          const inputs = Array.from(element.querySelectorAll('.ra-input'));
+
+          if (!inputs.length) return;
+
+          const choices = inputs.map(i => i.value);
+
+          function setHighlightByIndex(idx) {
+            const n = choices.length;
+            const pct = 100 / n;
+            highlight.style.width = `calc(${pct}% - 6px)`;
+            highlight.style.transform = `translateX(${idx * 100}%)`;
+          }
+
+          function setCheckedByValue(val, shouldTrigger=false) {
+            const idx = Math.max(0, choices.indexOf(val));
+            inputs.forEach((inp, i) => { inp.checked = (i === idx); });
+            setHighlightByIndex(idx);
+
+            props.value = choices[idx];
+            if (shouldTrigger) trigger('change', props.value);
+          }
+
+          setCheckedByValue(props.value ?? choices[0], false);
+
+          inputs.forEach((inp) => {
+            inp.addEventListener('change', () => {
+              setCheckedByValue(inp.value, true);
+            });
+          });
+        })();
+        """
+
+        super().__init__(
+            value=value,
+            html_template=html_template,
+            js_on_load=js_on_load,
+            **kwargs
+        )
+
+def apply_gpu_duration(val: str):
+    return int(val)
+
 MODEL_ID_Q4B = "Qwen/Qwen3-VL-4B-Instruct"
 processor_q4b = AutoProcessor.from_pretrained(MODEL_ID_Q4B, trust_remote_code=True)
 model_q4b = Qwen3VLForConditionalGeneration.from_pretrained(
     MODEL_ID_Q4B,
+    attn_implementation="kernels-community/flash-attn3",
     trust_remote_code=True,
     torch_dtype=torch.bfloat16
 ).to(device).eval()
 
-# Load Qwen3-VL-8B-Instruct
 MODEL_ID_Q8B = "Qwen/Qwen3-VL-8B-Instruct"
 processor_q8b = AutoProcessor.from_pretrained(MODEL_ID_Q8B, trust_remote_code=True)
 model_q8b = Qwen3VLForConditionalGeneration.from_pretrained(
     MODEL_ID_Q8B,
+    attn_implementation="kernels-community/flash-attn3",
     trust_remote_code=True,
     torch_dtype=torch.bfloat16
 ).to(device).eval()
 
-# Load Qwen3-VL-2B-Instruct
 MODEL_ID_Q2B = "Qwen/Qwen3-VL-2B-Instruct"
 processor_q2b = AutoProcessor.from_pretrained(MODEL_ID_Q2B, trust_remote_code=True)
 model_q2b = Qwen3VLForConditionalGeneration.from_pretrained(
     MODEL_ID_Q2B,
+    attn_implementation="kernels-community/flash-attn3",
     trust_remote_code=True,
     torch_dtype=torch.bfloat16
 ).to(device).eval()
 
-# Load Qwen2.5-VL-7B-Instruct
 MODEL_ID_M7B = "Qwen/Qwen2.5-VL-7B-Instruct"
 processor_m7b = AutoProcessor.from_pretrained(MODEL_ID_M7B, trust_remote_code=True)
 model_m7b = Qwen2_5_VLForConditionalGeneration.from_pretrained(
     MODEL_ID_M7B,
+    attn_implementation="kernels-community/flash-attn3",
     trust_remote_code=True,
     torch_dtype=torch.float16
 ).to(device).eval()
 
-# Load Qwen2.5-VL-3B-Instruct
 MODEL_ID_X3B = "Qwen/Qwen2.5-VL-3B-Instruct"
 processor_x3b = AutoProcessor.from_pretrained(MODEL_ID_X3B, trust_remote_code=True)
 model_x3b = Qwen2_5_VLForConditionalGeneration.from_pretrained(
     MODEL_ID_X3B,
+    attn_implementation="kernels-community/flash-attn3",
     trust_remote_code=True,
     torch_dtype=torch.float16
 ).to(device).eval()
 
-
-# --- Helper Functions ---
 
 def select_model(model_name: str):
     if model_name == "Qwen3-VL-4B-Instruct":
@@ -256,10 +356,51 @@ def navigate_pdf_page(direction: str, state: Dict[str, Any]):
     page_info_html = f'<div style="text-align:center;">Page {new_index + 1} / {total_pages}</div>'
     return image_preview, state, page_info_html
 
-# --- Generation Functions ---
+def calc_timeout_image(model_name: str, text: str, image: Image.Image, 
+                       max_new_tokens: int, temperature: float, top_p: float,
+                       top_k: int, repetition_penalty: float, gpu_timeout: int):
+    try:
+        return int(gpu_timeout)
+    except:
+        return 60
 
-@spaces.GPU
-def generate_image(model_name: str, text: str, image: Image.Image, max_new_tokens: int = 1024, temperature: float = 0.6, top_p: float = 0.9, top_k: int = 50, repetition_penalty: float = 1.2):
+def calc_timeout_video(model_name: str, text: str, video_path: str,
+                       max_new_tokens: int, temperature: float, top_p: float,
+                       top_k: int, repetition_penalty: float, gpu_timeout: int):
+    try:
+        return int(gpu_timeout)
+    except:
+        return 60
+
+def calc_timeout_pdf(model_name: str, text: str, state: Dict[str, Any],
+                     max_new_tokens: int, temperature: float, top_p: float,
+                     top_k: int, repetition_penalty: float, gpu_timeout: int):
+    try:
+        return int(gpu_timeout)
+    except:
+        return 60
+
+def calc_timeout_caption(model_name: str, image: Image.Image,
+                         max_new_tokens: int, temperature: float, top_p: float,
+                         top_k: int, repetition_penalty: float, gpu_timeout: int):
+    try:
+        return int(gpu_timeout)
+    except:
+        return 60
+
+def calc_timeout_gif(model_name: str, text: str, gif_path: str,
+                     max_new_tokens: int, temperature: float, top_p: float,
+                     top_k: int, repetition_penalty: float, gpu_timeout: int):
+    try:
+        return int(gpu_timeout)
+    except:
+        return 60
+
+@spaces.GPU(duration=calc_timeout_image)
+def generate_image(model_name: str, text: str, image: Image.Image, 
+                   max_new_tokens: int = 1024, temperature: float = 0.6, 
+                   top_p: float = 0.9, top_k: int = 50, 
+                   repetition_penalty: float = 1.2, gpu_timeout: int = 60):
     if image is None:
         yield "Please upload an image.", "Please upload an image."
         return
@@ -282,8 +423,11 @@ def generate_image(model_name: str, text: str, image: Image.Image, max_new_token
         time.sleep(0.01)
         yield buffer, buffer
 
-@spaces.GPU
-def generate_video(model_name: str, text: str, video_path: str, max_new_tokens: int = 1024, temperature: float = 0.6, top_p: float = 0.9, top_k: int = 50, repetition_penalty: float = 1.2):
+@spaces.GPU(duration=calc_timeout_video)
+def generate_video(model_name: str, text: str, video_path: str, 
+                   max_new_tokens: int = 1024, temperature: float = 0.6, 
+                   top_p: float = 0.9, top_k: int = 50, 
+                   repetition_penalty: float = 1.2, gpu_timeout: int = 90):
     if video_path is None:
         yield "Please upload a video.", "Please upload a video."
         return
@@ -310,12 +454,14 @@ def generate_video(model_name: str, text: str, video_path: str, max_new_tokens: 
     buffer = ""
     for new_text in streamer:
         buffer += new_text
-       # buffer = buffer.replace("<|im_end|>", "")
         time.sleep(0.01)
         yield buffer, buffer
 
-@spaces.GPU
-def generate_pdf(model_name: str, text: str, state: Dict[str, Any], max_new_tokens: int = 2048, temperature: float = 0.6, top_p: float = 0.9, top_k: int = 50, repetition_penalty: float = 1.2):
+@spaces.GPU(duration=calc_timeout_pdf)
+def generate_pdf(model_name: str, text: str, state: Dict[str, Any], 
+                 max_new_tokens: int = 2048, temperature: float = 0.6, 
+                 top_p: float = 0.9, top_k: int = 50, 
+                 repetition_penalty: float = 1.2, gpu_timeout: int = 120):
     if not state or not state["pages"]:
         yield "Please upload a PDF file first.", "Please upload a PDF file first."
         return
@@ -344,8 +490,11 @@ def generate_pdf(model_name: str, text: str, state: Dict[str, Any], max_new_toke
             time.sleep(0.01)
         full_response += page_header + page_buffer + "\n\n"
 
-@spaces.GPU
-def generate_caption(model_name: str, image: Image.Image, max_new_tokens: int = 1024, temperature: float = 0.6, top_p: float = 0.9, top_k: int = 50, repetition_penalty: float = 1.2):
+@spaces.GPU(duration=calc_timeout_caption)
+def generate_caption(model_name: str, image: Image.Image, 
+                     max_new_tokens: int = 1024, temperature: float = 0.6, 
+                     top_p: float = 0.9, top_k: int = 50, 
+                     repetition_penalty: float = 1.2, gpu_timeout: int = 60):
     if image is None:
         yield "Please upload an image to caption.", "Please upload an image to caption."
         return
@@ -372,8 +521,11 @@ def generate_caption(model_name: str, image: Image.Image, max_new_tokens: int = 
         time.sleep(0.01)
         yield buffer, buffer
 
-@spaces.GPU
-def generate_gif(model_name: str, text: str, gif_path: str, max_new_tokens: int = 1024, temperature: float = 0.6, top_p: float = 0.9, top_k: int = 50, repetition_penalty: float = 1.2):
+@spaces.GPU(duration=calc_timeout_gif)
+def generate_gif(model_name: str, text: str, gif_path: str, 
+                 max_new_tokens: int = 1024, temperature: float = 0.6, 
+                 top_p: float = 0.9, top_k: int = 50, 
+                 repetition_penalty: float = 1.2, gpu_timeout: int = 90):
     if gif_path is None:
         yield "Please upload a GIF.", "Please upload a GIF."
         return
@@ -399,11 +551,8 @@ def generate_gif(model_name: str, text: str, gif_path: str, max_new_tokens: int 
     buffer = ""
     for new_text in streamer:
         buffer += new_text
-      # buffer = buffer.replace("<|im_end|>", "")
         time.sleep(0.01)
         yield buffer, buffer
-
-# --- Examples and Gradio UI ---
 
 image_examples = [["Perform OCR on the image...", "examples/images/1.jpg"],
                   ["Caption the image. Describe the safety measures shown in the image. Conclude whether the situation is (safe or unsafe)...", "examples/images/2.jpg"],
@@ -417,7 +566,7 @@ gif_examples = [["Describe this GIF.", "examples/gifs/1.gif"],
 caption_examples = [["examples/captions/1.JPG"],
                     ["examples/captions/2.jpeg"], ["examples/captions/3.jpeg"]]
 
-with gr.Blocks(theme=orange_red_theme, css=css) as demo:
+with gr.Blocks() as demo:
     pdf_state = gr.State(value=get_initial_pdf_state())
     gr.Markdown("# **Qwen3-VL-Outpost**", elem_id="main-title")
     with gr.Row():
@@ -469,12 +618,9 @@ with gr.Blocks(theme=orange_red_theme, css=css) as demo:
 
         with gr.Column(scale=3):
             gr.Markdown("## Output", elem_id="output-title")
-            output = gr.Textbox(label="Raw Output Stream", interactive=False, lines=12, show_copy_button=True)
+            output = gr.Textbox(label="Raw Output Stream", interactive=True, lines=12)
             with gr.Accordion("(Result.md)", open=False):
-                markdown_output = gr.Markdown(label="(Result.Md)", latex_delimiters=[
-                                {"left": "$$", "right": "$$", "display": True},
-                                {"left": "$", "right": "$", "display": False}
-                            ])
+                markdown_output = gr.Markdown(label="(Result.Md)")
 
             model_choice = gr.Radio(
                 choices=[
@@ -487,27 +633,44 @@ with gr.Blocks(theme=orange_red_theme, css=css) as demo:
                 label="Select Model",
                 value="Qwen3-VL-4B-Instruct"
             )
+            
+            with gr.Row(elem_id="gpu-duration-container"):
+                with gr.Column():
+                    gr.Markdown("**GPU Duration (seconds)**")
+                    radioanimated_gpu_duration = RadioAnimated(
+                        choices=["60", "90", "120", "180", "240", "300"],
+                        value="60",
+                        elem_id="radioanimated_gpu_duration"
+                    )
+                    gpu_duration_state = gr.Number(value=60, visible=False)
+            
+            gr.Markdown("*Note: Higher GPU duration allows for longer processing but consumes more GPU quota.*")
 
-    # --- Event Handlers ---
-    
+    radioanimated_gpu_duration.change(
+        fn=apply_gpu_duration, 
+        inputs=radioanimated_gpu_duration, 
+        outputs=[gpu_duration_state], 
+        api_visibility="private"
+    )
+
     image_submit.click(fn=generate_image,
-                       inputs=[model_choice, image_query, image_upload, max_new_tokens, temperature, top_p, top_k, repetition_penalty],
+                       inputs=[model_choice, image_query, image_upload, max_new_tokens, temperature, top_p, top_k, repetition_penalty, gpu_duration_state],
                        outputs=[output, markdown_output])
     
     video_submit.click(fn=generate_video,
-                       inputs=[model_choice, video_query, video_upload, max_new_tokens, temperature, top_p, top_k, repetition_penalty],
+                       inputs=[model_choice, video_query, video_upload, max_new_tokens, temperature, top_p, top_k, repetition_penalty, gpu_duration_state],
                        outputs=[output, markdown_output])
     
     pdf_submit.click(fn=generate_pdf,
-                     inputs=[model_choice, pdf_query, pdf_state, max_new_tokens, temperature, top_p, top_k, repetition_penalty],
+                     inputs=[model_choice, pdf_query, pdf_state, max_new_tokens, temperature, top_p, top_k, repetition_penalty, gpu_duration_state],
                      outputs=[output, markdown_output])
                      
     gif_submit.click(fn=generate_gif,
-                     inputs=[model_choice, gif_query, gif_upload, max_new_tokens, temperature, top_p, top_k, repetition_penalty],
+                     inputs=[model_choice, gif_query, gif_upload, max_new_tokens, temperature, top_p, top_k, repetition_penalty, gpu_duration_state],
                      outputs=[output, markdown_output])
                      
     caption_submit.click(fn=generate_caption,
-                         inputs=[model_choice, caption_image_upload, max_new_tokens, temperature, top_p, top_k, repetition_penalty],
+                         inputs=[model_choice, caption_image_upload, max_new_tokens, temperature, top_p, top_k, repetition_penalty, gpu_duration_state],
                          outputs=[output, markdown_output])
 
     pdf_upload.change(fn=load_and_preview_pdf, inputs=[pdf_upload], outputs=[pdf_preview_img, pdf_state, page_info])
@@ -515,4 +678,4 @@ with gr.Blocks(theme=orange_red_theme, css=css) as demo:
     next_page_btn.click(fn=lambda s: navigate_pdf_page("next", s), inputs=[pdf_state], outputs=[pdf_preview_img, pdf_state, page_info])
 
 if __name__ == "__main__":
-    demo.queue(max_size=50).launch(mcp_server=True, ssr_mode=False, show_error=True)
+    demo.queue(max_size=50).launch(theme=orange_red_theme, css=css, mcp_server=True, ssr_mode=False, show_error=True)

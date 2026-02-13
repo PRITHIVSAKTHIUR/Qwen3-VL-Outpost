@@ -61,39 +61,25 @@ pip install -r requirements.txt
 **requirements.txt** includes:
 
 ```
+git+https://github.com/huggingface/transformers.git@v4.57.6
 git+https://github.com/huggingface/accelerate.git
 git+https://github.com/huggingface/peft.git
 transformers-stream-generator
-transformers==4.57.1
 huggingface_hub
-albumentations
 qwen-vl-utils
-pyvips-binary
 sentencepiece
 opencv-python
-docling-core
-python-docx
+torch==2.8.0
 torchvision
-supervision
 matplotlib
 pdf2image
-num2words
-reportlab
-html2text
-xformers
-markdown
 requests
 pymupdf
-loguru
+kernels
 hf_xet
 spaces
-pyvips
 pillow
-gradio
-einops
-httpx
-click
-torch
+gradio # - gradio@6.3.0
 fpdf
 timm
 av

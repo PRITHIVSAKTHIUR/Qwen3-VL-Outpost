@@ -1,73 +1,47 @@
-
 # **Qwen3-VL-Outpost**
 
-> [!note]
-HF Demo: https://huggingface.co/spaces/prithivMLmods/Qwen3-VL-Outpost
+Qwen3-VL-Outpost is an experimental, high-performance visual reasoning and multimodal inference suite designed for advanced image analysis, optical character recognition, and complex scene understanding. Built around the state-of-the-art Qwen3-VL and Qwen2.5-VL model families, this application provides an interactive web interface that empowers users to extract detailed information, solve visual problems, and generate highly accurate image captions. The suite features a bespoke, responsive frontend engineered with custom HTML, CSS, and JavaScript, ensuring a seamless drag-and-drop experience for media uploads. Fully GPU-accelerated and optimized with Flash Attention 3, Qwen3-VL-Outpost grants developers and researchers granular control over generation parameters, making it a robust workspace for testing and deploying next-generation vision-language capabilities.
 
+<img width="1920" height="1800" alt="Screenshot 2026-03-22 at 15-10-41 Qwen3-VL-Outpost - a Hugging Face Space by prithivMLmods" src="https://github.com/user-attachments/assets/d96ded78-cc7b-45f1-93ee-f285ec7b7e40" />
 
-**Qwen3-VL-Outpost** is a Gradio-based web application for vision-language tasks, leveraging multiple Qwen vision-language models to process images and videos. It provides an intuitive interface for users to input queries, upload media, and generate detailed responses using advanced models like **Qwen3-VL** and **Qwen2.5-VL**.
+### **Key Features**
 
-<img width="1918" height="1140" alt="Screenshot 2025-11-02 at 01-45-32 Qwen3-VL-Outpost - a Hugging Face Space by prithivMLmods" src="https://github.com/user-attachments/assets/3b9562e0-e1ec-4228-b4a7-ce444555155e" />
+* **Multi-Model Architecture:** Seamlessly switch between cutting-edge vision-language models directly from the interface. Supported models include `Qwen3-VL-4B-Instruct`, `Qwen3-VL-8B-Instruct`, `Qwen3-VL-2B-Instruct`, `Qwen2.5-VL-7B-Instruct`, and `Qwen2.5-VL-3B-Instruct`.
+* **Custom User Interface:** Features a bespoke, responsive Gradio frontend built with custom web technologies. It includes a drag-and-drop media drop zone, real-time output streaming, and an integrated advanced settings panel.
+* **Granular Inference Controls:** Fine-tune the artificial intelligence's output by adjusting text generation parameters such as Maximum New Tokens, Temperature, Top-p, Top-k, and Repetition Penalty.
+* **Output Management:** Built-in utility actions allow users to instantly copy the raw output text to their clipboard or save the generated response directly as a local `.txt` file.
+* **Flash Attention 3 Integration:** Utilizes `kernels-community/flash-attn3` for highly optimized, memory-efficient inference on compatible GPU hardware.
 
-> [!important] 
-note: remove kernels and flash_attn3 implementation if you are using it on *non-hopper* architecture gpus.
+### **Repository Structure**
 
----
+```text
+├── examples/
+│   ├── 1.jpg
+│   ├── 2.jpg
+│   ├── 3.jpg
+│   ├── 4.jpg
+│   └── 5.jpg
+├── app.py
+├── LICENSE
+├── pre-requirements.txt
+├── README.md
+└── requirements.txt
+```
 
-## **Features**
+### **Installation and Requirements**
 
-* **Image and Video Inference:** Upload images or videos and input text queries to generate detailed responses.
-* **Multiple Model Support:** Choose from the following models:
+To run Qwen3-VL-Outpost locally, you need to configure a Python environment with the following dependencies. Ensure you have a compatible CUDA-enabled GPU for optimal performance.
 
-  * Qwen3-VL-4B-Instruct
-  * Qwen3-VL-8B-Instruct
-  * Qwen3-VL-4B-Thinking
-  * Qwen2.5-VL-3B-Instruct
-  * Qwen2.5-VL-7B-Instruct
-* **Customizable Parameters:** Adjust advanced settings such as *max new tokens*, *temperature*, *top-p*, *top-k*, and *repetition penalty*.
-* **Real-time Streaming:** View model outputs as they are generated.
-* **Custom Theme:** Uses a tailored **SteelBlueTheme** for an enhanced user interface.
-* **Example Inputs:** Predefined examples for quick testing of image and video inference.
-
----
-
-## **Installation**
-
-### **Prerequisites**
-
-* Python 3.10 or higher
-* Git
-* CUDA-compatible GPU (recommended for optimal performance)
-
----
-
-### **Steps**
-
-#### **1. Clone the Repository**
-
+**1. Install Pre-requirements**
+Run the following command to update pip to the required version:
 ```bash
-git clone https://github.com/PRITHIVSAKTHIUR/Qwen3-VL-Outpost.git
-cd Qwen3-VL-Outpost
+pip install pip>=23.0.0
 ```
 
-#### **2. Create a Virtual Environment** *(optional but recommended)*
+**2. Install Core Requirements**
+Install the necessary machine learning and UI libraries. You can place these in a `requirements.txt` file and run `pip install -r requirements.txt`.
 
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-#### **3. Install Dependencies**
-
-Install the required packages using:
-
-```bash
-pip install -r requirements.txt
-```
-
-**requirements.txt** includes:
-
-```
+```text
 git+https://github.com/huggingface/transformers.git@v4.57.6
 git+https://github.com/huggingface/accelerate.git
 git+https://github.com/huggingface/peft.git
@@ -86,102 +60,23 @@ kernels
 hf_xet
 spaces
 pillow
-gradio # - gradio@6.3.0
+gradio
 fpdf
 timm
 av
 ```
 
----
+### **Usage**
 
-### **4. Run the Application**
-
-Start the Gradio interface with:
+Once your environment is set up and the dependencies are installed, you can launch the application by running the main Python script:
 
 ```bash
 python app.py
 ```
 
-This will launch the web interface, accessible via your browser.
-The application supports queuing with a maximum size of **50**.
+After the script initializes the interface, it will provide a local web address (usually `http://127.0.0.1:7860/`) which you can open in your browser to interact with the models. Note that the selected models will be downloaded and loaded into VRAM upon their first invocation.
 
----
+### **License and Source**
 
-## **Usage**
-
-1. **Select a Model:** Choose one of the available Qwen models from the radio buttons.
-2. **Upload Media:** Use the image or video upload section to provide input media.
-3. **Enter Query:** Input your text query in the provided textbox.
-4. **Adjust Settings:** Optionally tweak advanced parameters like *max new tokens* or *temperature* in the accordion.
-5. **Submit:** Click the **Submit** button to generate a response.
-
-   * Outputs are displayed in real-time in the **Raw Output Stream** and as formatted Markdown.
-
----
-
-## **Example Queries**
-
-### **Image Inference**
-
-* “Explain the content in detail.” *(with an uploaded image)*
-* “Jsonify Data.” *(for images with tabular data)*
-
-### **Video Inference**
-
-* “Explain the ad in detail.” *(with an uploaded video)*
-* “Identify the main actions in the video.”
-
----
-
-## **Project Structure**
-
-```
-Qwen3-VL-Outpost/
-│
-├── app.py              # Main application script containing the Gradio interface and model logic
-├── images/             # Directory for example image files
-├── videos/             # Directory for example video files
-├── requirements.txt    # List of dependencies required for the project
-└── README.md           # Project documentation
-```
-
----
-
-## **Notes**
-
-* The application uses **PyTorch** with GPU acceleration (`torch.cuda`) if available; otherwise, it falls back to CPU.
-* Video processing downsamples videos to a maximum of **10 frames** to optimize memory usage.
-* Ensure sufficient disk space and memory when loading large models such as **Qwen3-VL-8B-Instruct**.
-* The application is designed to run in a browser via Gradio's web interface.
-
----
-
-## **Contributing**
-
-Contributions are welcome!
-To contribute:
-
-1. Fork the repository.
-2. Create a new branch:
-
-   ```bash
-   git checkout -b feature-branch
-   ```
-3. Make your changes and commit:
-
-   ```bash
-   git commit -m "Add new feature"
-   ```
-4. Push to the branch:
-
-   ```bash
-   git push origin feature-branch
-   ```
-5. Open a pull request.
-
----
-
-## **License**
-
-This project is licensed under the **Apache License 2.0**.
-See the [LICENSE](LICENSE) file for details.
+* **License:** Apache License - Version 2.0
+* **GitHub Repository:** [https://github.com/PRITHIVSAKTHIUR/Qwen3-VL-Outpost.git](https://github.com/PRITHIVSAKTHIUR/Qwen3-VL-Outpost.git)

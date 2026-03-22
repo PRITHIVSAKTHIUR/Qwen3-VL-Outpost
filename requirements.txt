@@ -16,7 +16,7 @@ kernels
 hf_xet
 spaces
 pillow
-gradio # - gradio@6.3.0
+gradio
 fpdf
 timm
 av

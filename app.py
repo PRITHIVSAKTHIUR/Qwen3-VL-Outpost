@@ -1258,8 +1258,8 @@ with gr.Blocks() as demo:
 if __name__ == "__main__":
     demo.queue(max_size=50).launch(
         css=css,
-        mcp_server=True,
         ssr_mode=False,
+        mcp_server=True,
         show_error=True,
         allowed_paths=["examples"],
     )

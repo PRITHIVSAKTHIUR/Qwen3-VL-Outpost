@@ -198,61 +198,100 @@ def generate_image(model_name: str, text: str, image: Image.Image,
                    max_new_tokens: int = 1024, temperature: float = 0.6,
                    top_p: float = 0.9, top_k: int = 50,
                    repetition_penalty: float = 1.2, gpu_timeout: int = 60):
-    if image is None:
-        raise gr.Error("Please upload an image.")
-    if not text or not str(text).strip():
-        raise gr.Error("Please enter your instruction.")
+    try:
+        if image is None:
+            yield "[ERROR] Please upload an image."
+            return
+        if not text or not str(text).strip():
+            yield "[ERROR] Please enter your instruction."
+            return
 
-    processor, model = select_model(model_name)
-    messages = [{"role": "user", "content": [{"type": "image"}, {"type": "text", "text": text}]}]
-    prompt_full = processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+        processor, model = select_model(model_name)
+        messages = [{"role": "user", "content": [{"type": "image"}, {"type": "text", "text": text}]}]
+        prompt_full = processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
 
-    inputs = processor(
-        text=[prompt_full],
-        images=[image],
-        return_tensors="pt",
-        padding=True
-    ).to(device)
+        inputs = processor(
+            text=[prompt_full],
+            images=[image],
+            return_tensors="pt",
+            padding=True
+        ).to(device)
 
-    streamer = TextIteratorStreamer(processor, skip_prompt=True, skip_special_tokens=True)
-    generation_kwargs = {
-        **inputs,
-        "streamer": streamer,
-        "max_new_tokens": int(max_new_tokens),
-        "do_sample": True,
-        "temperature": float(temperature),
-        "top_p": float(top_p),
-        "top_k": int(top_k),
-        "repetition_penalty": float(repetition_penalty),
-    }
+        streamer = TextIteratorStreamer(
+            processor.tokenizer if hasattr(processor, "tokenizer") else processor,
+            skip_prompt=True,
+            skip_special_tokens=True
+        )
 
-    thread = Thread(target=model.generate, kwargs=generation_kwargs)
-    thread.start()
+        generation_error = {"error": None}
 
-    buffer = ""
-    for new_text in streamer:
-        buffer += new_text
-        time.sleep(0.01)
-        yield buffer
+        generation_kwargs = {
+            **inputs,
+            "streamer": streamer,
+            "max_new_tokens": int(max_new_tokens),
+            "do_sample": True,
+            "temperature": float(temperature),
+            "top_p": float(top_p),
+            "top_k": int(top_k),
+            "repetition_penalty": float(repetition_penalty),
+        }
 
-    gc.collect()
-    if torch.cuda.is_available():
-        torch.cuda.empty_cache()
+        def _run_generation():
+            try:
+                model.generate(**generation_kwargs)
+            except Exception as e:
+                generation_error["error"] = e
+                try:
+                    streamer.end()
+                except Exception:
+                    pass
+
+        thread = Thread(target=_run_generation, daemon=True)
+        thread.start()
+
+        buffer = ""
+        for new_text in streamer:
+            buffer += new_text
+            time.sleep(0.01)
+            yield buffer
+
+        thread.join(timeout=1.0)
+
+        if generation_error["error"] is not None:
+            err_msg = f"[ERROR] Inference failed: {str(generation_error['error'])}"
+            if buffer.strip():
+                yield buffer + "\n\n" + err_msg
+            else:
+                yield err_msg
+            return
+
+        if not buffer.strip():
+            yield "[ERROR] No output was generated."
+
+    except Exception as e:
+        yield f"[ERROR] {str(e)}"
+    finally:
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
 
 def run_router(model_name, text, image_b64, max_new_tokens_v, temperature_v, top_p_v, top_k_v, repetition_penalty_v, gpu_timeout_v):
-    image = b64_to_pil(image_b64)
-    yield from generate_image(
-        model_name=model_name,
-        text=text,
-        image=image,
-        max_new_tokens=max_new_tokens_v,
-        temperature=temperature_v,
-        top_p=top_p_v,
-        top_k=top_k_v,
-        repetition_penalty=repetition_penalty_v,
-        gpu_timeout=gpu_timeout_v,
-    )
+    try:
+        image = b64_to_pil(image_b64)
+        yield from generate_image(
+            model_name=model_name,
+            text=text,
+            image=image,
+            max_new_tokens=max_new_tokens_v,
+            temperature=temperature_v,
+            top_p=top_p_v,
+            top_k=top_k_v,
+            repetition_penalty=repetition_penalty_v,
+            gpu_timeout=gpu_timeout_v,
+        )
+    except Exception as e:
+        yield f"[ERROR] {str(e)}"
 
 
 def noop():
@@ -593,7 +632,16 @@ function init() {
         const sb = document.getElementById('sb-run-state');
         if (sb) sb.textContent = 'Done';
     }
+    function setRunErrorState() {
+        const l = document.getElementById('output-loader');
+        if (l) l.classList.remove('active');
+        const sb = document.getElementById('sb-run-state');
+        if (sb) sb.textContent = 'Error';
+    }
+
     window.__hideLoader = hideLoader;
+    window.__setRunErrorState = setRunErrorState;
+    window.__showToast = showToast;
 
     function flashPromptError() {
         promptInput.classList.add('error-flash');
@@ -778,7 +826,12 @@ function init() {
         showLoader();
         setTimeout(() => {
             const gradioBtn = document.getElementById('gradio-run-btn');
-            if (!gradioBtn) return;
+            if (!gradioBtn) {
+                setRunErrorState();
+                if (outputArea) outputArea.value = '[ERROR] Run button not found.';
+                showToast('Run button not found', 'error');
+                return;
+            }
             const btn = gradioBtn.querySelector('button');
             if (btn) btn.click(); else gradioBtn.click();
         }, 180);
@@ -950,6 +1003,10 @@ function watchOutputs() {
 
     let lastText = '';
 
+    function isErrorText(val) {
+        return typeof val === 'string' && val.trim().startsWith('[ERROR]');
+    }
+
     function syncOutput() {
         const el = resultContainer.querySelector('textarea') || resultContainer.querySelector('input');
         if (!el) return;
@@ -958,7 +1015,15 @@ function watchOutputs() {
             lastText = val;
             outArea.value = val;
             outArea.scrollTop = outArea.scrollHeight;
-            if (window.__hideLoader && val.trim()) window.__hideLoader();
+
+            if (val.trim()) {
+                if (isErrorText(val)) {
+                    if (window.__setRunErrorState) window.__setRunErrorState();
+                    if (window.__showToast) window.__showToast('Inference failed', 'error');
+                } else {
+                    if (window.__hideLoader) window.__hideLoader();
+                }
+            }
         }
     }
 
